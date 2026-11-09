@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headplane-config
+  namespace: headplane
+data:
+  # Replace with the real Headscale URL, for example:
+  #   http://headscale.headscale.svc.cluster.local:8080
+  #   https://headscale.example.com
+  headscale-url: "http://headscale.invalid:8080"
+  base-url: "https://headplane.dddbg.com"
+  base-path: "/admin"
+  # Set to "true" once EdgeOne/Traefik forwards X-Forwarded-Proto: https.
+  cookie-secure: "false"

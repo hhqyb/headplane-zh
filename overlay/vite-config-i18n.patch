@@ -1,0 +1,20 @@
+diff --git a/vite.config.ts b/vite.config.ts
+index 2095782..e7f6379 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
+ import { cn } from "cn/vite";
+ import { defineConfig } from "vite";
+ 
++import { headplaneI18n } from "./i18n/plugin";
+ import { headplaneDevServer } from "./runtime/vite-plugin";
+ 
+ const PROD_ENTRY = "./app/server/main.ts";
+@@ -43,6 +44,7 @@ export default defineConfig(({ command }) => {
+     // Relative imports let one build run under any configured path.
+     base: command === "build" ? "./" : undefined,
+     plugins: [
++      headplaneI18n(),
+       headplaneDevServer({
+         entry: DEV_ENTRY,
+         publicDir: new URL("./public", import.meta.url).pathname,

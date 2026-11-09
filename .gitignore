@@ -1,0 +1,4 @@
+upstream/
+.prepared-version
+i18n/reports/
+.DS_Store
