@@ -66,6 +66,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             HEADPLANE_VERSION=${{ steps.prepare.outputs.version }}
+            IMAGE_TAG=${{ steps.prepare.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
