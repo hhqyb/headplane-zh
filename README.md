@@ -2,6 +2,11 @@
 
 Headplane 中文汉化覆盖层，以及用于构建多架构镜像和部署到 k3s 的配套文件。
 
+部署包含两个服务，放在同一个 `headplane` namespace：
+
+- **Headplane**：`https://headplane.dddbg.com`，中文管理界面
+- **Headscale**：`https://hs.dddbg.com`，实际的 tailnet 控制服务器；Headplane 内部通过 `http://headscale:8080` 连接它
+
 这个仓库不保存 Headplane 源码。GitHub Actions 会按 `upstream-ref.txt` 拉取上游固定提交，把 `i18n/` 覆盖层复制进去，应用 `overlay/vite-config-i18n.patch`，然后用上游 Dockerfile 构建 `linux/amd64` 和 `linux/arm64` 镜像。
 
 如果本地网络访问 GitHub 不稳定，可以设置 `UPSTREAM_REPO_URL` 指向镜像或本地路径：
@@ -19,7 +24,7 @@ overlay/vite-config-i18n.patch 给上游 vite.config.ts 加两行插件注册
 upstream-ref.txt              当前构建的上游提交
 scripts/prepare-upstream.sh   拉取上游 + 覆盖 + 打补丁
 .github/workflows/build-image.yaml
-deploy/k8s/                   k3s 清单（NodePort 30301、Traefik Ingress、Longhorn PVC）
+deploy/k8s/                   k3s 清单（Headplane + Headscale、NodePort、Traefik Ingress、Longhorn PVC）
 deploy/stun-nat/              创建 stun-nat 穿透规则的脚本
 ```
 
@@ -62,16 +67,34 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   -f upstream/Dockerfile upstream
 ```
 
+## Headscale
+
+- 版本：`ghcr.io/juanfont/headscale:0.29.5`
+- 配置：`deploy/k8s/10-headscale-configmap.yaml`
+- 数据：`headscale-data` Longhorn PVC，SQLite
+- 对外：`https://hs.dddbg.com`，NodePort `30302`
+- Headplane 内部地址：`http://headscale.headplane.svc.cluster.local:8080`
+- 策略：`policy.mode: database`，Headplane 可以直接编辑 ACL
+- DERP：使用 Tailscale 公共 DERP，不自己暴露 UDP
+
+生成 Headplane 使用的 API key：
+
+```bash
+kubectl -n headplane exec deploy/headscale -- \
+  headscale apikeys create --expiration 8760h
+```
+
 ## 部署
 
 见 [deploy/k8s/README.md](deploy/k8s/README.md)。要点：
 
 - Namespace：`headplane`
-- NodePort：`30301`
-- Ingress：`headplane.dddbg.com`（Traefik）
-- PVC：Longhorn 1Gi
-- Headscale 地址和 API key 先用占位值，之后通过 ConfigMap/Secret 更新
-- 通过 `stun-nat` 新建一条独立规则暴露 NodePort，再由 EdgeOne 回源
+- Headplane：NodePort `30301`，Ingress `headplane.dddbg.com`
+- Headscale：NodePort `30302`，Ingress `hs.dddbg.com`
+- PVC：Longhorn 1Gi × 2
+- Headplane 的 `headscale-url` 默认指向同 namespace 的 Headscale Service
+- 生成 Headscale API key 后写入 `headplane-secrets`，重启 Headplane
+- 通过 `stun-nat` 分别暴露两个 NodePort，再由 EdgeOne 回源
 
 ## 安全
 
@@ -81,7 +104,8 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ## 限制
 
-- Headplane 需要连接 Headscale 才能登录；当前清单里的 `headscale-url` 是占位值，部署后需要更新。
+- Headscale 首次启动后需要生成 API key 并写入 `headplane-secrets`，否则 Headplane 无法登录。
+- Headscale 的 `server_url` 是 `https://hs.dddbg.com`；EdgeOne 回源需要支持 WebSocket/HTTP2，否则 Tailscale 客户端无法完成控制连接。
 - EdgeOne 的回源地址由 `stun-nat` 动态分配，公网端口可能变化；需要手动更新或自行配置 Webhook/DDNS。
 - 汉化按英文原文匹配，上游改文案后新文案会回退英文，不会导致构建或运行时错误。
 
