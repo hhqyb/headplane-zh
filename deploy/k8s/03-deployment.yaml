@@ -57,6 +57,16 @@ spec:
                 configMapKeyRef:
                   name: headplane-config
                   key: headscale-url
+            - name: HEADPLANE_HEADSCALE__PUBLIC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: headplane-config
+                  key: headscale-public-url
+            - name: HEADPLANE_INTEGRATION__AGENT__ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: headplane-config
+                  key: agent-enabled
             - name: HEADPLANE_HEADSCALE__API_KEY
               valueFrom:
                 secretKeyRef:

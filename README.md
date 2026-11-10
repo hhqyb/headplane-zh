@@ -4,7 +4,7 @@ Headplane 中文汉化覆盖层，以及用于构建多架构镜像和部署到 
 
 部署包含两个服务，放在同一个 `headplane` namespace：
 
-- **Headplane**：`https://headplane.dddbg.com`，中文管理界面
+- **Headplane**：`https://headplane.dddbg.com`，中文管理界面，已启用内置 Agent
 - **Headscale**：`https://hs.dddbg.com`，实际的 tailnet 控制服务器；Headplane 内部通过 `http://headscale:8080` 连接它
 
 这个仓库不保存 Headplane 源码。GitHub Actions 会按 `upstream-ref.txt` 拉取上游固定提交，把 `i18n/` 覆盖层复制进去，应用 `overlay/vite-config-i18n.patch`，然后用上游 Dockerfile 构建 `linux/amd64` 和 `linux/arm64` 镜像。
@@ -91,6 +91,8 @@ kubectl -n headplane exec deploy/headscale -- \
 - Namespace：`headplane`
 - Headplane：NodePort `30301`，Ingress `headplane.dddbg.com`
 - Headscale：NodePort `30302`，Ingress `hs.dddbg.com`
+- `headscale-public-url` 控制页面显示的 `tailscale up --login-server` 地址
+- `agent-enabled: "true"` 启用内置 Agent，节点名为 `headplane-agent`
 - PVC：Longhorn 1Gi × 2
 - Headplane 的 `headscale-url` 默认指向同 namespace 的 Headscale Service
 - 生成 Headscale API key 后写入 `headplane-secrets`，重启 Headplane

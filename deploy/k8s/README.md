@@ -59,6 +59,11 @@ kubectl -n headplane rollout status deploy/headplane
 
 Headplane 的 `headscale-url` 已经默认指向同 namespace 的 Headscale Service。
 
+`01-configmap.yaml` 里还有两个和页面/Agent 相关的配置：
+
+- `headscale-public-url: "https://hs.dddbg.com"`：首页/引导页显示 `tailscale up --login-server=...` 时使用这个公网地址，而不是内部 Service 地址。
+- `agent-enabled: "true"`：启用 Headplane 内置 Agent。Agent 由 Headplane 进程直接 spawn，不需要额外的 Deployment/Pod；它需要 `headscale.api_key` 和 Headscale 0.28+，会创建 tag-only 预认证密钥并以 `headplane-agent` 节点加入 tailnet，数据放在 Headplane PVC 的 `/var/lib/headplane/agent`。
+
 ## 4. 生成 Headscale API key 并接入 Headplane
 
 ```bash
@@ -114,6 +119,8 @@ Headscale 的 `server_url` 是 `https://hs.dddbg.com`，客户端会走 HTTPS/We
 - 改 Headscale 域名：编辑 `10-headscale-configmap.yaml` 的 `server_url`，重启 Headscale，同时更新 EdgeOne 和 Headplane 的 `base-url`（如果头界面域名也变）。
 - 改 Headplane 域名：编辑 `01-configmap.yaml` 的 `base-url` 和 `05-ingress.yaml` 的 host，重启 Headplane。
 - 改 Headplane 的 Headscale 地址：编辑 `01-configmap.yaml` 的 `headscale-url`。
+- 改首页显示的 `tailscale up --login-server` 地址：编辑 `01-configmap.yaml` 的 `headscale-public-url`。
+- 关闭 Agent：把 `01-configmap.yaml` 的 `agent-enabled` 改为 `"false"` 并重启 Headplane。
 - `cookie-secure`：如果 EdgeOne/Traefik 会传 `X-Forwarded-Proto: https`，设为 `"true"`；否则先保持 `"false"`。
 - Headscale 数据：`headscale-data` PVC；删除 namespace 会删除 PVC 和所有 tailnet 数据。
 

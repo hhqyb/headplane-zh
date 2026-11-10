@@ -6,7 +6,11 @@ metadata:
 data:
   # Headplane talks to the Headscale Service in this namespace.
   headscale-url: "http://headscale.headplane.svc.cluster.local:8080"
+  # Public URL shown to users, for example in the "tailscale up" command.
+  headscale-public-url: "https://hs.dddbg.com"
   base-url: "https://headplane.dddbg.com"
   base-path: "/admin"
+  # Enable the built-in Headplane agent.
+  agent-enabled: "true"
   # Set to "true" once EdgeOne/Traefik forwards X-Forwarded-Proto: https.
   cookie-secure: "false"
